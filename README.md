@@ -33,7 +33,8 @@ byte** (md5-checked, including `composite_zoom.png`).
 | 6 | The flight vector meets the camera axis at **35°–117°** (best 72°). It was **crossing**, not flying toward or away. | strong |
 | 7 | Reconciling the rise with the range constraint requires a **climb of ~20–27°**. It was gaining altitude, not approaching. | moderate |
 | 8 | Speed is **9.2 body-lengths/second** — the one *range-independent* figure. Aircraft-like, and far too slow for a bird or insect. | moderate |
-| 9 | **Absolute size, distance and speed are not determinable** from this footage. A single uncalibrated camera has an exact scale degeneracy. | certain |
+| 9 | **Absolute size, distance and speed are not determinable from the imagery alone** - a single uncalibrated camera has an exact scale degeneracy. | certain |
+| 9b | But the object **emerges from behind a foreground conifer**, so `range > tree range`. With the tree at **22-36 m**, that gives **length > ~1.2-1.9 m** and **speed > ~40-64 km/h**. This excludes the near-field insect/small-bird readings. | moderate |
 | 10 | The closeup photo in the article is a **different object** (elongation 1.25 vertical vs 2.1 horizontal). | strong |
 
 **One-line summary.** An elongated ~2:1 body crossed the field on a dead-straight
@@ -66,10 +67,10 @@ data/
   cutouts/cutouts.png            operator-drawn object outlines - the seed input
   reference/ynet-closeup.jpg     the article's separate closeup photo
 src/                             one module per responsibility (see below)
-pipeline/                        p0..p7, each reads only the previous stage
+pipeline/                        p0..p8, each reads only the previous stage
 results/
   positions.csv  contours.csv  shape.csv
-  findings.txt  checks.txt  calibration.txt
+  findings.txt  checks.txt  calibration.txt  occlusion.txt
   masks/*.npz                    the segmented object, per frame
   figures/                       marked/ contours/ composite stack clip.mp4
 run.py
@@ -244,6 +245,29 @@ structures are tracked sub-pixel against a 1.6 px RMS acceptance bar:
 | fg post A | 176 | 33.37 px | rejected |
 
 **None passes**, so no vanishing point can be formed and the FOV stays assumed.
+
+### Occlusion bound — `pipeline/p8_occlusion.py` → `results/occlusion.txt`
+
+The only absolute-scale constraint in the whole analysis. The object first appears
+at (1255, 174) — **mid-frame, not at a picture edge** — and its measured velocity
+(−25.5, −9.8 px/frame) extrapolates back into a dark conifer (mask x 1456–1631,
+y 141–405) for frames **80–83**. If it passed behind that tree, `range > tree range`.
+
+Tree range from elevation: a canopy point at elevation A and range D stands
+H = D·tan(A) above the camera. The canopy top is at **22.4°**, so for a 15–20 m
+conifer with the camera mounted at 5–6 m, **D = 22–36 m** (full envelope over
+12–22 m trees and 4–8 m mountings: 10–44 m, the low corner degenerate).
+
+| HFOV | object | minimum length | minimum speed |
+|---|---|---|---|
+| 60° | 2.59° | 0.98–1.64 m | 33–54 km/h |
+| **70°** | 3.02° | **1.15–1.91 m** | **38–64 km/h** |
+| 90° | 3.88° | 1.48–2.46 m | 49–82 km/h |
+
+**Caveat.** The occlusion is *inferred*, not watched frame-by-frame: the object
+leaves the foliage at frame 83 but is not detected until 90. That gap is equally
+well explained by its rising contrast (it was faintest early), so this is
+suggestive rather than proven, and the bound inherits that.
 
 ### Independent checks — `pipeline/p6_checks.py` → `results/checks.txt`
 

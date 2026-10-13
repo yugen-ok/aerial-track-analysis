@@ -6,7 +6,7 @@
 import subprocess, sys
 from pathlib import Path
 
-STAGES = ["p1_locate", "p2_segment", "p3_shape", "p4_analyze", "p5_figures", "p6_checks", "p7_calibrate"]
+STAGES = ["p1_locate", "p2_segment", "p3_shape", "p4_analyze", "p5_figures", "p6_checks", "p7_calibrate", "p8_occlusion"]
 
 def main(loose):
     root = Path(__file__).resolve().parent

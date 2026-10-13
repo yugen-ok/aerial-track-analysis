@@ -1,0 +1,24 @@
+measured velocity -25.48, -9.75 px/frame
+conifer mask: x 1456..1631, y 141..405; canopy top y=141
+
+back-extrapolated track vs the foliage:
+  occluded frames 80..83, last behind foliage at (1481, 251)
+
+elevation of canopy top 22.4 deg; of the occluding point 17.7 deg
+
+tree range D from H_top = D*tan(elev_top):
+   tree 12 m, camera 4 m -> D =  19.4 m
+   tree 12 m, camera 8 m -> D =   9.7 m
+   tree 22 m, camera 4 m -> D =  43.6 m
+   tree 22 m, camera 8 m -> D =  33.9 m
+   => full envelope 10-44 m
+   the 10 m corner is degenerate (camera almost at canopy height);
+   CENTRAL ESTIMATE (tree 15-20 m, camera 5-6 m): 22-36 m
+
+MINIMUM object size, since object_range > tree_range:
+   HFOV 60 deg (object 2.59 deg): length > 0.98-1.64 m, speed > 33-54 km/h
+   HFOV 70 deg (object 3.02 deg): length > 1.15-1.91 m, speed > 38-64 km/h
+   HFOV 90 deg (object 3.88 deg): length > 1.48-2.46 m, speed > 49-82 km/h
+
+This excludes the near-field explanations: an insect or small bird
+would have to sit far closer than the tree, which the occlusion forbids.
