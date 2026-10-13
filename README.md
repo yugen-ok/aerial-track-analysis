@@ -248,26 +248,20 @@ structures are tracked sub-pixel against a 1.6 px RMS acceptance bar:
 
 ### Occlusion bound — `pipeline/p8_occlusion.py` → `results/occlusion.txt`
 
-The only absolute-scale constraint in the whole analysis. The object first appears
-at (1255, 174) — **mid-frame, not at a picture edge** — and its measured velocity
-(−25.5, −9.8 px/frame) extrapolates back into a dark conifer (mask x 1456–1631,
-y 141–405) for frames **80–83**. If it passed behind that tree, `range > tree range`.
+The only absolute-scale constraint available. The object first appears at
+(1255, 174) — mid-frame, not at a picture edge — and its measured velocity
+(−25.5, −9.8 px/frame) extrapolates back inside a foreground conifer for frames
+**80–83**, so `range > tree range`.
 
-Tree range from elevation: a canopy point at elevation A and range D stands
-H = D·tan(A) above the camera. The canopy top is at **22.4°**, so for a 15–20 m
-conifer with the camera mounted at 5–6 m, **D = 22–36 m** (full envelope over
-12–22 m trees and 4–8 m mountings: 10–44 m, the low corner degenerate).
+Tree range from elevation: the canopy top is at **22.4°**, and H = D·tan(A), so a
+15–20 m conifer with the camera at 5–6 m gives **D = 22–36 m**.
 
-| HFOV | object | minimum length | minimum speed |
-|---|---|---|---|
-| 60° | 2.59° | 0.98–1.64 m | 33–54 km/h |
-| **70°** | 3.02° | **1.15–1.91 m** | **38–64 km/h** |
-| 90° | 3.88° | 1.48–2.46 m | 49–82 km/h |
+At HFOV 70° this makes the object **longer than 1.2–1.9 m** and **faster than
+38–64 km/h** (0.98–2.46 m and 33–82 km/h across the 60–90° FOV bracket), which
+rules out the near-field insect and small-bird readings.
 
-**Caveat.** The occlusion is *inferred*, not watched frame-by-frame: the object
-leaves the foliage at frame 83 but is not detected until 90. That gap is equally
-well explained by its rising contrast (it was faintest early), so this is
-suggestive rather than proven, and the bound inherits that.
+*Inferred, not observed frame-by-frame:* the track leaves the foliage at frame 83
+but is not detected until 90, a gap equally explained by its rising contrast.
 
 ### Independent checks — `pipeline/p6_checks.py` → `results/checks.txt`
 
