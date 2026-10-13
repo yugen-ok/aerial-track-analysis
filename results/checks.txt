@@ -1,0 +1,10 @@
+A. OPTICAL LINEARITY (CCTV timeline bar, known straight)
+   49/61 inliers over x 620..1820
+   linear residual RMS 1.08 px; sagitta 0.06 px -> no measurable distortion
+   => straight world lines stay straight; calibration is valid IN PRINCIPLE.
+
+B. ARTICLE CLOSEUP vs THE TRACKED OBJECT
+   closeup blob: bbox 617x676, elongation 1.25, orientation 98 deg
+   tracked object: elongation 2.1 +- 0.3, orientation ~179 deg (horizontal)
+   => elongation 1.25 vs 2.1 and orientation 98 vs 179: DIFFERENT OBJECT.
+   The closeup is a separate user-submitted still, not a crop of this video.

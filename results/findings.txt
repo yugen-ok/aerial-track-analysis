@@ -1,0 +1,94 @@
+
+======================================================================
+1. TRACK GEOMETRY
+======================================================================
+measured frames: 16 (of 19); span 17 frames = 0.68 s
+displacement dx=-415 dy=-151  |d|=442 px
+in-image components: horizontal 94%  vertical 34%
+straight-line fit: bearing -21.0 deg above horizontal, residual RMS 2.13 px, max 4.46 px
+first half -19.7 deg, second half -20.8 deg, difference -1.1 deg
+curvature F-test: F=0.10 (needs >4.6 to justify a bend)
+duplicate frame pairs (25 fps upsampled from a slower capture): [(93, 94), (95, 96), (98, 99), (100, 101), (104, 105), (106, 107)]
+effective independent samples ~10, not 16
+
+======================================================================
+2. SIZE PER FRAME AND CHANGE FUNCTIONS
+======================================================================
+major  linear    87.81  -1.967 t   R2=0.498 | exp    89.44*exp(-0.02939 t) = -2.90%/frame  R2=0.544
+       slope -1.967 +- 0.528  t=-3.73  significant
+minor  linear    35.79  -0.217 t   R2=0.038 | exp    35.20*exp(-0.00594 t) = -0.59%/frame  R2=0.033
+       slope -0.217 +- 0.291  t=-0.75  NOT significant
+area   linear  2175.85 -45.075 t   R2=0.163 | exp  2142.80*exp(-0.02690 t) = -2.65%/frame  R2=0.186
+       slope -45.075 +- 27.292  t=-1.65  NOT significant
+
+======================================================================
+3. RANGE (from the minor axis, which rotation cannot foreshorten)
+======================================================================
+d ln(width)/dframe = -0.00594 +- 0.00860
+width over run x0.904 (95% CI 0.679..1.204) -> range x1.106 (CI 0.831..1.474)
+   approach to range x0.9 needs +0.00620 = 1.4 sigma
+   approach to range x0.8 needs +0.01313 = 2.2 sigma
+   approach to range x0.7 needs +0.02098 = 3.1 sigma
+   approach to range x0.5 needs +0.04077 = 5.4 sigma
+
+Is the width profile flat (constant-range arc) or peaked (straight-line pass)?
+   linear RMS 5.58 px; quadratic RMS 3.39 px; F=22.26 (needs >4.7)
+   concave: width peaks at frame 99 -> closest approach inside the window,
+   which favours a straight-line pass over a flat constant-range arc.
+
+======================================================================
+4. ROTATION
+======================================================================
+orientation -2.458 deg/frame (r=-0.817), total -41.8 deg over the run
+tumble rate 61 deg/s = 10.2 rpm
+axial mean 178.8 deg, resultant R=0.860, circular sd 15.7 deg
+orientation vs major r=+0.805 t=+5.08  significant  (explains 65% of variance)
+orientation vs minor r=+0.421 t=+1.74  NOT significant  (explains 18% of variance)
+-> long axis tracks the rotation, short axis does not = body of revolution
+
+======================================================================
+5. BRIGHTNESS
+======================================================================
+object-minus-sky contrast +1.473/frame (r=+0.939): 9.9 -> 29.6
+surface brightness is range-invariant for a resolved object, so brightening
+while AREA FALLS cannot be approach; it is a change of aspect.
+
+======================================================================
+6. ANGULAR GEOMETRY (depends on the assumed FOV)
+======================================================================
+HFOV 60 deg: 0.0367 deg/px | traverse 16.2 deg | object 2.59 x 1.24 deg | rate 23.8 deg/s
+HFOV 70 deg: 0.0428 deg/px | traverse 18.9 deg | object 3.02 x 1.45 deg | rate 27.8 deg/s
+HFOV 90 deg: 0.0550 deg/px | traverse 24.3 deg | object 3.88 x 1.86 deg | rate 35.8 deg/s
+frustum at HFOV 70 (VFOV 45.5): at 100 m the frame spans 140 x 84 m
+
+======================================================================
+7. ELEVATION, LEVEL FLIGHT AND CLIMB
+======================================================================
+horizon y=311 (hillside lights (WRONG - used early by mistake)): elevation 5.9 -> 12.4 deg; level flight forces range x0.472 (width x2.12)
+horizon y=665 (ground-plane vanishing point): elevation 21.1 -> 27.5 deg; level flight forces range x0.739 (width x1.35)
+azimuthal travel 17.8 deg
+   range ratio 0.83 -> climb 4.3 deg above horizontal
+   range ratio 0.90 -> climb 10.7 deg above horizontal
+   range ratio 1.00 -> climb 19.8 deg above horizontal
+   range ratio 1.11 -> climb 26.9 deg above horizontal
+   range ratio 1.47 -> climb 32.4 deg above horizontal
+
+======================================================================
+8. FLIGHT VECTOR vs CAMERA AXIS
+======================================================================
+   range x1.47 (95% receding  ) -> 34.9 deg off the camera axis
+   range x1.11 (best estimate ) -> 72.1 deg off the camera axis
+   range x1.00 (constant      ) -> 90.0 deg off the camera axis
+   range x0.83 (95% approaching) -> 117.2 deg off the camera axis
+
+======================================================================
+9. SPEED (the only range-independent statement)
+======================================================================
+travel 6.27 body-lengths in 0.68 s = 9.2 body-lengths/second
+comparison: airliner 6.2, light aircraft 7.5, heron 12, quadcopter 25, pigeon 46, housefly 250
+   length   0.1 m -> speed    0.9 m/s (     3 km/h), range     1.9 m
+   length   0.3 m -> speed    2.8 m/s (    10 km/h), range     5.7 m
+   length   1.0 m -> speed    9.2 m/s (    33 km/h), range    19.0 m
+   length   3.0 m -> speed   27.7 m/s (   100 km/h), range    56.9 m
+   length  10.0 m -> speed   92.2 m/s (   332 km/h), range   189.8 m
+   length  40.0 m -> speed  368.7 m/s (  1327 km/h), range   759.3 m

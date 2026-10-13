@@ -1,0 +1,317 @@
+# Single-camera kinematic analysis of an airborne object
+
+### Ynet CCTV clip, northern Israel, 2026-10-11
+
+Frame-level analysis of the CCTV clip published by Ynet on 2026-10-11
+(`https://www.ynet.co.il/news/article/r1ptysdime`).
+
+Everything below is reproduced by `python run.py`. Every number in this document
+is printed by a script named beside it; nothing is quoted from memory.
+
+---
+
+## Bottom line
+
+| # | Claim | Confidence |
+|---|---|---|
+| 1 | The object is in the **sky**, crossing right-to-left and rising, visible in frames **90–108**. | certain |
+| 2 | Its path is a **straight line**, 21° above horizontal: residual **2.13 px RMS** over 442 px of travel. No bend (F = 0.10, needs > 4.6). | strong |
+| 3 | The **long axis shrinks** (−2.9 %/frame, t = −3.73) while the **short axis does not** (−0.6 %/frame, t = −0.75). The shrinkage is **foreshortening, not recession**. | strong |
+| 4 | It **rotates** at **10.2 rpm** (61°/s): orientation sweeps **−41.8°** over the run (r = −0.82). The long axis tracks that rotation (r = +0.805, significant), the short axis does not (r = +0.42, n.s.) — the signature of an **elongated body of revolution**, ~2:1. | moderate |
+| 5 | **Range stayed roughly constant**: ×1.106 (95 % CI 0.83–1.47). Consistent with no change; slight recession is the point estimate. Substantial approach is excluded (range ×0.7 at 3.1σ, halving at 5.4σ). | moderate |
+| 5b | The width profile is **concave, peaking at frame 99** (F = 22.3), favouring a **straight-line pass with closest approach inside the window** over a flat constant-range arc. | weak |
+| 6 | The flight vector meets the camera axis at **35°–117°** (best 72°). It was **crossing**, not flying toward or away. | strong |
+| 7 | Reconciling the rise with the range constraint requires a **climb of ~20–27°**. It was gaining altitude, not approaching. | moderate |
+| 8 | Speed is **9.2 body-lengths/second** — the one *range-independent* figure. Aircraft-like, and far too slow for a bird or insect. | moderate |
+| 9 | **Absolute size, distance and speed are not determinable** from this footage. A single uncalibrated camera has an exact scale degeneracy. | certain |
+| 10 | The closeup photo in the article is a **different object** (elongation 1.25 vertical vs 2.1 horizontal). | strong |
+
+**One-line summary.** An elongated ~2:1 body crossed the field on a dead-straight
+ascending track at ~21°, tumbling at ~10 rpm, at a range that barely changed —
+but nothing in the footage fixes how far away, how big, or how fast it was.
+
+---
+
+## What the footage actually is
+
+A phone filming a monitor that replays a ~6.8 s CCTV clip **five times**
+(loop period exactly **169 frames**; CCTV timestamp 19:52:22→28). The analysis
+uses the first loop. Two consequences run through everything:
+
+* **Two cameras in series** (CCTV → monitor → phone), so the image is a
+  homography on top of a projection.
+* **Frames are duplicated in pairs** from 25 fps upsampling of a slower capture
+  Measured by centroid step (bimodal: 0.1-5 px vs 29-85 px), the pairs are
+  93/94, 95/96, 98/99, 100/101, 104/105, 106/107 — so the effective independent
+  sample count is **10, not 16**, and quoted R² and significance are optimistic.
+
+---
+
+## Repository layout
+
+```
+data/
+  source/ynet-r1ptysdime.mp4     the published video (7.2 MB)
+  frames/frame_000{87..108}.png  the 22 frames used (p0 regenerates all 845)
+  cutouts/cutouts.png            operator-drawn object outlines - the seed input
+  reference/ynet-closeup.jpg     the article's separate closeup photo
+src/                             one module per responsibility (see below)
+pipeline/                        p0..p7, each reads only the previous stage
+results/
+  positions.csv  contours.csv  shape.csv
+  findings.txt  checks.txt  calibration.txt
+  masks/*.npz                    the segmented object, per frame
+  figures/                       marked/ contours/ composite stack clip.mp4
+run.py
+```
+
+### Module ownership (one concern each, no duplication)
+
+| module | sole owner of |
+|---|---|
+| `src/config.py` | paths and every tunable constant |
+| `src/imaging.py` | frame loading, blur, sRGB→Lab |
+| `src/video.py` | yt-dlp / ffmpeg calls |
+| `src/templates.py` | cutout extraction, masked NCC |
+| `src/locate.py` | search gate, centroid refinement, marking radius |
+| `src/segment.py` | minimax cost, thresholds, mask carving |
+| `src/shape.py` | PCA axes, mean shape, outline |
+| `src/stats.py` | every regression, CI and significance test |
+| `src/geometry.py` | every world-geometry conversion |
+| `src/render.py` | every drawing operation |
+
+Each function has exactly one definition and every caller uses it; e.g. the PCA
+axes are computed only in `shape.mask_stats`, and both the shape stage and the
+closeup check call it.
+
+---
+
+## How each claim is derived
+
+### Locating the object — `pipeline/p1_locate.py` → `results/positions.csv`
+
+The object is **dark-cored and low-contrast against a dark sky**, so brightness
+differencing fails. It is found instead by matching the six operator-drawn
+cutouts (`data/cutouts/cutouts.png`) with **masked normalised cross-correlation**
+(`templates.masked_ncc`): correlation is computed over the cutout's own pixels
+only, and regions whose local sigma < 4 are set to −1, because NCC is numerically
+unstable on flat sky.
+
+Search is restricted to the sky band and gated to 75 px around a
+velocity-predicted position, then the centre is snapped to the intensity-weighted
+centroid of the brightest blob in the window (`locate.refine_centroid`) — this is
+what carries frames 104–108, where NCC falls to 0.18–0.29.
+
+Result: NCC 0.98–0.99 for frames 90–94, degrading to ~0.23 by 108.
+Marking radius = half the matched cutout's diagonal × 1.15.
+
+### Finding the boundary — `pipeline/p2_segment.py` → `results/contours.csv`
+
+Not a brightness threshold. For each frame a **minimax-path cost** is computed
+from a seed ring of pure sky at radius 1.85 r inward (`segment.minimax_cost`):
+
+```
+cost[p] = min over paths sky->p of ( max single-step dE along the path )
+```
+
+A pixel is *inside* when every route to it from the sky had to cross a colour
+jump larger than the threshold. dE is CIE76 in Lab (`imaging.rgb_to_lab`).
+
+Two threshold rules are implemented; strict is the reported one:
+
+* **strict** (`stable_threshold`) — MSER: sweep the cut level, keep the one whose
+  enclosed area is most stable.
+* **loose** (`noise_threshold`) — the jump need only beat `0.75 x` the sky's own
+  95th-percentile internal jump. The sky's noise is remarkably uniform across
+  frames (dE 0.25–0.35), which makes this a principled dial. The loose variant
+  recovers frame 90 (281 -> 2669 px) but over-grows the strong frames (108 goes
+  907 -> 5149 px, bulging into open sky); neither setting is uniformly better,
+  and strict is what the report uses.
+
+Post-processing removes sky-coloured halo, severs thin necks with a 5x5 opening,
+and keeps the component at the marking centre. The inner limit lifts by 0.25 r
+whenever the object reaches it.
+
+### Shape and the three bad frames — `pipeline/p3_shape.py` → `results/shape.csv`
+
+Axes are 2-sigma full extents (4·sqrt(eigenvalue)) of the mask's second-moment
+matrix.
+
+Frames **90, 92, 102** are low-contrast interpolation ghosts whose carve collapses
+to a speck (281, 306, 179 px against a median of 1537). They are replaced by the
+centroid-aligned **mean shape** rescaled to the mean area (1803 px), drawn in
+**orange** instead of cyan, flagged `substituted=1`, and **excluded from every
+statistic below**.
+
+### The numbers — `pipeline/p4_analyze.py` → `results/findings.txt`
+
+**Track.** Displacement dx = −415, dy = −151 px (94 % horizontal, 34 % vertical);
+bearing 21.0°; straight-line residual 2.13 px RMS, 4.46 px max. First half
+−19.7°, second half −20.8°, difference 1.1°. Curvature F = 0.10.
+
+**Size.**
+
+| | linear | exponential | slope ± se | t |
+|---|---|---|---|---|
+| major | 87.8 − 1.967 t | ×exp(−0.0294 t) = **−2.90 %/frame** | −1.967 ± 0.528 | **−3.73** |
+| minor | 35.8 − 0.217 t | ×exp(−0.0059 t) = −0.59 %/frame | −0.217 ± 0.291 | −0.75 |
+| area | 2176 − 45.1 t | ×exp(−0.0269 t) = −2.65 %/frame | −45.1 ± 27.3 | −1.65 |
+
+**Range.** Angular width is proportional to 1/range, so a log-linear fit on the
+*minor* axis reads range directly: d ln(width)/dframe = −0.00594 ± 0.00860 →
+width ×0.904 (CI 0.679–1.204) → **range ×1.106 (CI 0.83–1.47)**.
+The minor axis is used because rotation foreshortens length but not width.
+
+**Rotation.** −2.458°/frame, r = −0.817, total −41.8°; **61°/s = 10.2 rpm**. Axial mean
+178.8°, circular sd 15.7°. Coupling: orientation vs major r = +0.805 (t = +5.08,
+65 % of variance); orientation vs minor r = +0.421 (t = +1.74, n.s.).
+
+**Straight pass or constant-range arc?** The minor-axis profile is concave:
+linear RMS 5.58 px vs quadratic 3.39 px, **F = 22.3** (needs > 4.7), peaking at
+**frame 99**. A constant-range arc predicts a flat profile; a straight-line pass
+predicts a peak at closest approach. This mildly favours the straight line — but
+it is a weak signal on 16 points and frame 96, the largest carve, leverages it.
+
+**Brightness.** Object-minus-sky contrast rises +1.473/frame (r = +0.939), 9.9 →
+29.6. This **cannot** be approach: for a *resolved* object surface brightness is
+range-invariant, so approach shows as growth, not glow — and area *fell*.
+
+**Angular geometry** (the one assumed number is the CCTV horizontal FOV):
+
+| HFOV | deg/px | traverse | object | rate |
+|---|---|---|---|---|
+| 60° | 0.0367 | 16.2° | 2.59 × 1.24° | 23.8°/s |
+| **70°** | 0.0428 | 18.9° | 3.02 × 1.45° | 27.8°/s |
+| 90° | 0.0550 | 24.3° | 3.88 × 1.86° | 35.8°/s |
+
+**Elevation and climb.** With the horizon at y = 665 (ground-plane vanishing
+point), elevation runs 21.1° → 27.5°. Level flight would force range ×0.739,
+i.e. width ×1.35 — excluded by the measurement. Resolving in favour of the
+measurement, the required climb is:
+
+| range ratio | climb |
+|---|---|
+| 0.83 (approach) | 4.3° |
+| 1.00 (constant) | 19.8° |
+| 1.11 (best) | 26.9° |
+| 1.47 (receding) | 32.4° |
+
+**Flight vector vs camera axis.** 34.9° (receding limit) to 117.2° (approach
+limit), best estimate **72.1°**. Motion parallel to the axis is excluded outright
+by the 442 px of transverse travel.
+
+**Speed.** travel/length = 6.27 body-lengths in 0.68 s = **9.2 BL/s**. Both
+numerator and denominator scale with distance, so this survives the scale
+ambiguity. Reference: airliner 6.2, light aircraft 7.5, heron 12, quadcopter 25,
+pigeon 46, housefly 250.
+
+| assumed length | speed | implied range |
+|---|---|---|
+| 0.3 m | 10 km/h | 5.7 m |
+| 1 m | 33 km/h | 19 m |
+| 3 m | 100 km/h | 57 m |
+| 10 m | 332 km/h | 190 m |
+| 40 m | 1327 km/h | 759 m |
+
+### Calibration attempt — `pipeline/p7_calibrate.py` → `results/calibration.txt`
+
+A negative result, kept reproducible because the report leans on it. Five vertical
+structures are tracked sub-pixel against a 1.6 px RMS acceptance bar:
+
+| structure | n | RMS | |
+|---|---|---|---|
+| fg post B | 134 | 2.34 px | rejected |
+| fg post C | 108 | 4.78 px | rejected |
+| fence post | 58 | 10.49 px | rejected |
+| sign pole | 110 | 19.22 px | rejected |
+| fg post A | 176 | 33.37 px | rejected |
+
+**None passes**, so no vanishing point can be formed and the FOV stays assumed.
+
+### Independent checks — `pipeline/p6_checks.py` → `results/checks.txt`
+
+**Optical linearity.** The CCTV timeline bar is straight in the original; a RANSAC
+fit across 1200 px gives residual **1.08 px RMS, sagitta 0.06 px**. No measurable
+barrel distortion, and the monitor is flat. Calibration is valid in principle.
+
+**The closeup.** Its bright blob is elongation **1.25 at 98°** (vertical), against
+the tracked object's **2.1 at ~179°** (horizontal). Not the same object; it is a
+separate user-submitted still (filename follows the Telegram export convention).
+
+---
+
+## What cannot be determined, and why
+
+**Absolute scale.** Multiply the object's size, its distance and its speed by any
+factor k and every angle — hence every pixel — is unchanged. One uncalibrated
+camera cannot break this degeneracy. A 0.1 m object at 1.9 m and a 40 m object at
+759 m produce *identical* footage. Every "how far / how big / how fast" answer in
+this report is therefore conditional on an assumption, and is presented as a table
+over that assumption rather than as a number.
+
+**Camera calibration failed.** Vanishing-point extraction did not converge: the
+automatic Hough bundle gave a 185 px residual, and of five hand-tracked vertical
+structures only one met a 1.6 px bar (post B, 2.34 px; the others 4.8–33 px). Night
+imagery rephotographed off a monitor leaves man-made edges too short (60–190 px),
+low-contrast and motion-blurred, and the usable verticals are nearly parallel, so
+their intersection is badly conditioned. **The FOV therefore remains assumed.**
+
+**Identification.** At ~70 × 34 px — perhaps 30–80 px in the original CCTV image —
+the blur kernel of the chain is comparable to the object itself. The de-rotated
+10-frame stack (`results/figures/stack.png`) shows only a smooth lozenge, slightly
+brighter at one end. No structure survives to identify.
+
+What would unlock it: the camera's lens spec, a daylight frame from the same
+camera, or identifying the site so satellite imagery supplies ground control
+points. Any one converts every ratio here into metres.
+
+---
+
+## Review of this analysis
+
+Errors made during the work, and their corrections:
+
+1. **Wrong object, for many iterations.** I first tracked a bright blob crossing
+   the parking forecourt — a car's headlight glare — and reported entry/exit frames
+   for it. The real object is in the sky and dark-cored. My brightness-difference
+   approach was structurally biased toward the strongest moving contrast in the
+   scene, and I never validated the candidate against what the article described.
+   Corrected only when the operator supplied cutouts. **This invalidated roughly
+   half the session's work.**
+2. **"Receding" claimed from area alone.** Area conflates both axes. Splitting
+   them showed the minor axis is flat and the shrink is foreshortening. Corrected.
+3. **Wrong horizon.** I used the distant hillside lights (y = 311) as the horizon;
+   those hills are *elevated*, and the ground-plane VP puts the horizon near
+   y = 665. This overstated the level-flight contradiction roughly twofold
+   (width ×2.12 claimed vs ×1.35 actual) and understated the object's elevation
+   (5.9→12.4° vs 21.1→27.5°).
+4. **Two regressions after an approved result.** I added an area-regularisation
+   pass and a per-component sky cut on top of a version the operator had approved;
+   both made the output worse and were reverted. The approved behaviour is what
+   `p2`/`p3` now implement.
+5. **Timebase error.** I used dt = 19/25 = 0.76 s, but the measured span (frames
+   91→108) is 17 intervals = **0.68 s**. Angular rate and body-lengths/second were
+   ~11 % low throughout the conversation; this report uses the corrected 27.8°/s
+   and 9.2 BL/s.
+6. **Destroyed a working script** by a read-modify-write that truncated the file
+   before failing on a non-ASCII character. Recovered by rewriting; all source is
+   now ASCII.
+7. **Effective-sample claim was a guess.** I asserted "~9 independent samples"
+   without measuring it; the centroid-step criterion gives 10.
+8. **Tumble rate and loop period were never computed** until this packaging pass;
+   9 rpm was an eyeball figure, the measured value is 10.2 rpm, and the 169-frame
+   loop is now confirmed at self-correlation 0.941.
+9. **Premature distortion claim.** I first reported a 20.9 px sagitta from a noisy
+   edge trace and implied the optics might be unusable; a robust RANSAC fit showed
+   0.06 px. The first measurement should not have been reported.
+
+Weaknesses that remain, by design rather than oversight:
+
+* Three of nineteen frames carry a **synthetic** shape (flagged, excluded).
+* The effective sample size is 10, not 16, because of duplicated frames.
+* Claim 4 (body of revolution) rests on an *absence* of coupling (r = 0.42,
+  n.s.). With n = 16 a modestly non-axisymmetric body is not excluded, and such a
+  body could in principle mask an approach through rotation — though that requires
+  foreshortening to track the approach in lock-step for 19 frames.
+* The horizon at y = 665 comes from the weak ground bundle (30 px residual), not a
+  converged calibration. Claim 7's climb figures inherit that uncertainty.

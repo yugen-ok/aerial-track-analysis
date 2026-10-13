@@ -1,0 +1,15 @@
+Vertical structures, fitted sub-pixel (x = m*y + c):
+  fg post A   n=176  rms  33.37 px  rejected
+  fg post B   n=134  rms   2.34 px  rejected
+  fg post C   n=108  rms   4.78 px  rejected
+  sign pole   n=110  rms  19.22 px  rejected
+  fence post  n= 58  rms  10.49 px  rejected
+
+usable lines: 0
+FAILED: a vanishing point needs at least two lines.
+Cause: night CCTV rephotographed off a monitor leaves man-made edges
+short (60-190 px), low-contrast and motion-blurred. The usable verticals
+are also near-parallel, so their intersection is badly conditioned.
+CONSEQUENCE: the horizontal field of view remains an ASSUMPTION
+(70 deg assumed; 60-90 deg bracket), and every absolute angle,
+rate and speed in the report scales with it.
