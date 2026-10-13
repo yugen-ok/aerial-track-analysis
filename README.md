@@ -34,12 +34,15 @@ byte** (md5-checked, including `composite_zoom.png`).
 | 7 | Reconciling the rise with the range constraint requires a **climb of ~20–27°**. It was gaining altitude, not approaching. | moderate |
 | 8 | Speed is **9.2 body-lengths/second** — the one *range-independent* figure. Aircraft-like, and far too slow for a bird or insect. | moderate |
 | 9 | **Absolute size, distance and speed are not determinable from the imagery alone** - a single uncalibrated camera has an exact scale degeneracy. | certain |
-| 9b | But the object **emerges from behind a foreground conifer**, so `range > tree range`. With the tree at **22-36 m**, that gives **length > ~1.2-1.9 m** and **speed > ~40-64 km/h**. This excludes the near-field insect/small-bird readings. | moderate |
+| 9b | But the object **emerges from behind a foreground conifer**, so `range > tree range`. With the tree at **22-36 m**: **length > 1 m, speed > 33 km/h** at the most conservative corner; **1.2-1.9 m and 38-64 km/h** centrally. Refusing supersonic caps the far end at ~206 m / 10.9 m. This kills the near-field insect and small-bird readings. | moderate |
 | 10 | The closeup photo in the article is a **different object** (elongation 1.25 vertical vs 2.1 horizontal). | strong |
 
 **One-line summary.** An elongated ~2:1 body crossed the field on a dead-straight
-ascending track at ~21°, tumbling at ~10 rpm, at a range that barely changed —
-but nothing in the footage fixes how far away, how big, or how fast it was.
+ascending track at ~21°, tumbling at ~10 rpm, at a range that barely changed.
+The imagery alone fixes no absolute scale, but the object passes behind a
+foreground tree, and that one occlusion forces it to be **at least ~1 m long
+and moving at least ~33 km/h** — plausibly 1-11 m at 40-350 km/h, 25-200 m from
+the camera and 10-80 m up. Drone or light-aircraft regime, not a bird or insect.
 
 ---
 
@@ -256,9 +259,19 @@ The only absolute-scale constraint available. The object first appears at
 Tree range from elevation: the canopy top is at **22.4°**, and H = D·tan(A), so a
 15–20 m conifer with the camera at 5–6 m gives **D = 22–36 m**.
 
-At HFOV 70° this makes the object **longer than 1.2–1.9 m** and **faster than
-38–64 km/h** (0.98–2.46 m and 33–82 km/h across the 60–90° FOV bracket), which
-rules out the near-field insect and small-bird readings.
+Propagating through the angular size (3.02°) and the range-independent
+9.2 body-lengths/second:
+
+| | length | speed |
+|---|---|---|
+| conservative corner (60° FOV, 22 m) | **≥ 0.98 m** | **≥ 33 km/h** |
+| central (70° FOV, 22–36 m) | ≥ 1.15–1.91 m | ≥ 38–64 km/h |
+| 90° FOV, 36 m | ≥ 2.44 m | ≥ 81 km/h |
+
+Size and speed are not independent: once range has a floor, both follow. The far
+end is capped by the same angular rate — under 100 m/s means inside 206 m and
+under 10.9 m long; under 250 m/s, inside 515 m and 27 m. This rules out the
+near-field insect and small-bird readings.
 
 *Inferred, not observed frame-by-frame:* the track leaves the foliage at frame 83
 but is not detected until 90, a gap equally explained by its rising contrast.

@@ -20,5 +20,14 @@ MINIMUM object size, since object_range > tree_range:
    HFOV 70 deg (object 3.02 deg): length > 1.15-1.91 m, speed > 38-64 km/h
    HFOV 90 deg (object 3.88 deg): length > 1.48-2.46 m, speed > 49-82 km/h
 
+CONSOLIDATED BOUNDS
+   most conservative corner (HFOV 60 deg, tree 22 m):
+      length >= 0.98 m, speed >= 33 km/h
+   central (HFOV 70 deg, tree 22-36 m):
+      length >= 1.15-1.91 m, speed >= 38-64 km/h
+   upper end, refusing supersonic (range < v_max / angular rate):
+      speed < 100 m/s -> range < 206 m -> length < 10.9 m
+      speed < 250 m/s -> range < 515 m -> length < 27.1 m
+
 This excludes the near-field explanations: an insect or small bird
 would have to sit far closer than the tree, which the occlusion forbids.

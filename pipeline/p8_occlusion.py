@@ -100,7 +100,21 @@ def main():
         say("   HFOV %2.0f deg (object %.2f deg): length > %.2f-%.2f m, speed > %.0f-%.0f km/h"
             % (hfov, ang, lo * k, hi * k, bl * lo * k * 3.6, bl * hi * k * 3.6))
 
-    say(); say("This excludes the near-field explanations: an insect or small bird")
+    say(); say("CONSOLIDATED BOUNDS")
+    kmin = 2 * math.tan(math.radians(maj * G.deg_per_px(C.HFOV_RANGE[0])) / 2)
+    kmid = 2 * math.tan(math.radians(maj * G.deg_per_px(hf)) / 2)
+    say("   most conservative corner (HFOV %.0f deg, tree %.0f m):" % (C.HFOV_RANGE[0], lo))
+    say("      length >= %.2f m, speed >= %.0f km/h" % (lo * kmin, bl * lo * kmin * 3.6))
+    say("   central (HFOV %.0f deg, tree %.0f-%.0f m):" % (hf, lo, hi))
+    say("      length >= %.2f-%.2f m, speed >= %.0f-%.0f km/h"
+        % (lo * kmid, hi * kmid, bl * lo * kmid * 3.6, bl * hi * kmid * 3.6))
+    say("   upper end, refusing supersonic (range < v_max / angular rate):")
+    rate = math.radians(travel * G.deg_per_px(hf) / dt)
+    for v in (100, 250):
+        R = v / rate
+        say("      speed < %3d m/s -> range < %3.0f m -> length < %.1f m" % (v, R, R * kmid))
+    say()
+    say("This excludes the near-field explanations: an insect or small bird")
     say("would have to sit far closer than the tree, which the occlusion forbids.")
     C.RESULTS.mkdir(parents=True, exist_ok=True)
     (C.RESULTS / "occlusion.txt").write_text("\n".join(L), encoding="utf-8")
