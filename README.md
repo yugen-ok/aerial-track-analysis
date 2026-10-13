@@ -239,7 +239,7 @@ structures are tracked sub-pixel against a 1.6 px RMS acceptance bar:
 |---|---|---|---|
 | fg post B | 134 | 2.34 px | rejected |
 | fg post C | 108 | 4.78 px | rejected |
-| fence post | 58 | 10.49 px | rejected |
+| fence post | 58 | 5.02 px | rejected |
 | sign pole | 110 | 19.22 px | rejected |
 | fg post A | 176 | 33.37 px | rejected |
 

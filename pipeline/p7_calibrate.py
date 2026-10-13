@@ -18,12 +18,13 @@ def say(s=""):
     print(s); L.append(s)
 
 # approximate seeds for thin vertical structures: (name, x, y_from, y_to)
-POSTS = [("fg post A", 1012, 824, 1000), ("fg post B", 1240, 816, 950),
-         ("fg post C", 1140, 900, 1008), ("sign pole", 706, 650, 760),
-         ("fence post", 1003, 648, 706)]
+# (name, x, y_from, y_to, dark) - dark=False for a bright post on a dark ground
+POSTS = [("fg post A", 1012, 824, 1000, True), ("fg post B", 1240, 816, 950, True),
+         ("fg post C", 1140, 900, 1008, True), ("sign pole", 706, 650, 760, True),
+         ("fence post", 1003, 648, 706, False)]
 ACCEPT_RMS = 1.6     # px; a line this straight is usable for a vanishing point
 
-def track_post(im, x0, ya, yb, half=14):
+def track_post(im, x0, ya, yb, dark=True, half=14):
     """Follow a thin vertical feature by its per-row intensity-weighted centre."""
     pts, x = [], float(x0)
     for y in range(ya, yb):
@@ -31,7 +32,7 @@ def track_post(im, x0, ya, yb, half=14):
         seg = im[y, a:b]
         if len(seg) < 5:
             break
-        w = seg.max() - seg
+        w = (seg.max() - seg) if dark else (seg - seg.min())
         w = np.clip(w - 0.5 * w.max(), 0, None)
         if w.sum() < 1e-6:
             continue
@@ -43,8 +44,8 @@ def main():
     im = blur(load_gray(C.FRAMES / "frame_00099.png"), 1.0)
     say("Vertical structures, fitted sub-pixel (x = m*y + c):")
     kept = []
-    for name, x, ya, yb in POSTS:
-        P = track_post(im, x, ya, yb)
+    for name, x, ya, yb, dark in POSTS:
+        P = track_post(im, x, ya, yb, dark)
         if len(P) < 20:
             say("  %-11s too short" % name); continue
         m, c = np.polyfit(P[:, 1], P[:, 0], 1)
